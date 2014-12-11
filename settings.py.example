@@ -1,0 +1,90 @@
+# coding: utf8
+
+import re
+
+
+general_settings = {
+    # todas as confs definidas dentro aqui podem ser definidas individualmente
+    #  em cada flow, se definidas em seu dicionário
+
+    # chave que precisa ser passada na requisição HTTP para ser aceita
+    'token': 'uaaJGJDBUtgXd3ug',
+
+    # métodos que podem ser usados no flow
+    'http_methods': ['POST', 'GET'],
+
+    # usuario e senha do usuario utilizado para atualizar a planilha
+    'google_user': {
+        'username': 'user@gmail.com',
+        'password': 'userpass',
+    }
+}
+
+
+flows = {
+    'gastos-itau': {
+
+        # se o token do flow não for definido, usa o token geral
+        'token': 'czDj57wewahWdUQ4',
+
+        # chave da planilha a ser atualizada
+        'spreadsheet_key': '2Au7cv4thXN5DdGtDOWpMcFN6QnZyajBCWlA1VlXzRlA',
+
+        # indica em que posição da planilha cada campo está
+        'fields': {
+
+            # o valor pode ser uma string indicando a coluna onde o campo
+            # deve ser inserido ou...
+            'person':       'A',
+            'timestamp':    'B',
+            'category':     'C',
+            'description':  'D',
+            'frequency':    'E',
+
+            # ...o valor também pode ser um dicionário que especifica a coluna
+            # onde o campo deve ser inserido (col) e uma função de formatação
+            # para esse valor antes de ser inserido (format).
+            'value': {
+                'col':      'F',
+                'format': lambda(v): '-{}'.format(v) if v else v
+            },
+            'place':        'G',
+        },
+
+        # regexp que precisa estar presente na mensagem para que ela seja
+        # processada
+        'activate_flow_re': re.compile('COMPRA APROVADA', re.IGNORECASE),
+
+        # dicionário com os seletores de cada campo
+        'selectors': {
+
+            'person': (
+                (u'João', u'UNICLASS 2.0 MC PLAT final XXXX'),
+                (u'Maria', (
+                    u'Cartao final YYYY',
+                    u'UNICLASS 2.0 MC PLAT p/ MARIA SILVA'
+                )),
+            ),
+            'timestamp': (
+                re.compile('em (\d{2}/\d{2}/\d{4}),? as \d{2}h\d{2}'),
+                re.compile('(\d{2}/\d{2}) \d{2}:\d{2}:\d{2}'),
+            ),
+            'value': re.compile(' R(?:S|\$) (\d+,\d{2})'),
+            'place': (
+                (u'Padaria Palma de Ouro - Rua Japurá', (
+                    u'PANIF PAL.',
+                    u'PANIFICADORA PALMA DE',
+                    u'PALMA DE OURO',
+                )),
+                (u'Restaurante Nutrisom - Viaduto Jacareí',
+                    u'NUTRISOM REST NATURAL'),
+                (u'Açougue Santo Antônio - Rua Santo Antônio',
+                    u'CS CARNES STO ANTONIO'),
+                (u'MERCADO LIN', u'Mercado LIN - Rua Abolição'),
+                (u'Posto RCJ - Rua Major Diogo', u'RCJ AUTO POSTO'),
+                re.compile('Local: (.+?)\.'),
+                re.compile(' - (.+?)(?: - | valor RS)'),
+            )
+        }
+    }
+}
